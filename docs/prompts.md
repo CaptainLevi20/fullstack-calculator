@@ -181,6 +181,17 @@ The three earlier changes you resolved (the magnitude rule for scientific notati
 
 *English:* Yes, continue.
 
+### 2. Adding end-to-end tests
+*Context: after the branch was merged and pushed, the assistant proposed a small Playwright end-to-end suite that runs in CI against the Docker stack.*
+
+> Si, agrégala
+>
+> Considero que es una propuesta de valor para el proyecto y la prueba técnica
+
+*English:* Yes, add it.
+
+I consider it a valuable addition to the project and to the technical assessment.
+
 ---
 
 ## Appendix — Prompts sent to subagents
