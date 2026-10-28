@@ -206,7 +206,28 @@ What the suites pin down:
 - **Keypad:** chaining, operator replacement, input lock while a request is in flight, error reset.
 - **UI:** keyboard input, the focused-key Enter case, Copy JSON/cURL including clipboard failure, and a request timeout.
 
-[GitHub Actions](.github/workflows/ci.yml) runs `go vet`, the Go tests with the race detector and a 90 % gate, oxlint, type-checking, the frontend coverage gate, and `docker compose build` on every push.
+### End-to-end tests
+
+The unit suites test each layer on its own; the frontend's tests use a simulated API. A small [Playwright](https://playwright.dev) suite in [`e2e/`](e2e/) checks that the pieces work together: a real Chromium, through nginx, against the real Go API.
+
+```bash
+docker compose up -d --build --wait
+cd e2e
+npm install
+npx playwright install chromium
+npx playwright test
+```
+
+| Test | What it proves |
+|---|---|
+| `0.1 + 0.2` from the keyboard | The API's JSON is exactly `{"result":"0.3","rounded":false}` and the display shows `0.3`, with no float anywhere in between |
+| `10 ÷ 3` from the keypad | The full 34-digit result, the rounded badge, the history row and the inspector's request body |
+| `1250.75 ÷ 0` | The API's 422 message reaches the display, and the inspector shows `← 422` |
+| Two 34-digit operands on a 390 px phone | The exact sum, and History never hides results or scrolls sideways |
+
+Each test was checked against a deliberate regression. Parsing results through `Number()` in the client breaks the `10 ÷ 3` and phone tests, and the stylesheet from before the history fix breaks the phone test. `E2E_BASE_URL` points the suite at another deployment (for example the Vite dev server on `:5173`).
+
+[GitHub Actions](.github/workflows/ci.yml) runs `go vet`, the Go tests with the race detector and a 90 % gate, oxlint, type-checking and the frontend coverage gate. It then builds the images, starts the stack with Docker Compose and runs the end-to-end suite, on every push.
 
 ## Project structure
 
@@ -221,6 +242,7 @@ frontend/
   src/api/               typed fetch client, cURL builder
   src/components/        Display, Keypad, History, Inspector, Section
   nginx.conf, Dockerfile node:24 → unprivileged nginx
+e2e/                     Playwright end-to-end tests against the Docker stack
 docs/
   superpowers/specs/     approved design spec
   superpowers/plans/     TDD implementation plan
