@@ -474,7 +474,7 @@ func NewHandler(logger *slog.Logger) http.Handler {
         mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) </span>{
                 <span class="cov8" title="1">writeError(w, http.StatusNotFound, codeNotFound, "Not found.")
 </span>        })
-        <span class="cov8" title="1">return withRecovery(logger, withRequestLog(logger, mux))</span>
+        <span class="cov8" title="1">return withMiddleware(logger, mux)</span>
 }
 
 func handleCalculate(w http.ResponseWriter, r *http.Request) {
@@ -561,6 +561,12 @@ type statusRecorder struct {
 func (r *statusRecorder) WriteHeader(status int) {
         <span class="cov8" title="1">r.status = status
         r.ResponseWriter.WriteHeader(status)
+</span>}
+
+// withMiddleware applies the API's middleware stack to h. Recovery sits
+// inside the request log so a panicking request is still logged, as a 500.
+func withMiddleware(logger *slog.Logger, h http.Handler) http.Handler {
+        <span class="cov8" title="1">return withRequestLog(logger, withRecovery(logger, h))
 </span>}
 
 // withRequestLog logs one structured line per request.

@@ -175,7 +175,8 @@ There is deliberately no service or repository layer: there is no state to manag
 - Paper tones, a single green for "money", and IBM Plex Mono with tabular figures for every number.
 - Fonts are self-hosted through `@fontsource`; nothing loads from a CDN.
 - Long results wrap instead of being truncated. History rows truncate and expand on click.
-- On phones, the panels collapse under the keypad.
+- On phones, the panels collapse under the keypad. On wider screens they are plain headings with their content always shown, so screen readers never hear "collapsed" for something on screen.
+- The busy `=` key only pulses when the user allows motion (`prefers-reduced-motion`).
 
 **Containers.**
 - The backend runs on `distroless/static` as non-root. It has no shell, so the binary has its own `healthcheck` mode for Compose.
@@ -194,8 +195,8 @@ cd frontend && npm run coverage         # fails below the 85% thresholds
 
 | Layer | Statements | Notes |
 |---|---|---|
-| Backend total | **90.9 %** | calculator 92.0 %, httpapi 92.4 %, cmd/server 87.0 % |
-| Frontend total | **97.6 %** | branches 96.4 %, functions 97.8 %, lines 99.3 %; 101 tests |
+| Backend total | **91.0 %** | calculator 92.0 %, httpapi 92.5 %, cmd/server 87.0 % |
+| Frontend total | **97.8 %** | branches 96.5 %, functions 98.0 %, lines 99.3 %; 103 tests |
 
 HTML reports are committed so they can be opened without running anything: [`docs/coverage/backend.html`](docs/coverage/backend.html) and [`docs/coverage/frontend/index.html`](docs/coverage/frontend/index.html).
 
@@ -224,8 +225,9 @@ npx playwright test
 | `10 ÷ 3` from the keypad | The full 34-digit result, the rounded badge, the history row and the inspector's request body |
 | `1250.75 ÷ 0` | The API's 422 message reaches the display, and the inspector shows `← 422` |
 | Two 34-digit operands on a 390 px phone | The exact sum, and History never hides results or scrolls sideways |
+| `1 + 1` with the API response held | The busy `=` key pulses only when the user allows motion (`prefers-reduced-motion`) |
 
-Each test was checked against a deliberate regression. Parsing results through `Number()` in the client breaks the `10 ÷ 3` and phone tests, and the stylesheet from before the history fix breaks the phone test. `E2E_BASE_URL` points the suite at another deployment (for example the Vite dev server on `:5173`).
+Each test was checked against a deliberate regression. Parsing results through `Number()` in the client breaks the `10 ÷ 3` and phone tests, the stylesheet from before the history fix breaks the phone test, and an unconditional animation breaks the motion test. `E2E_BASE_URL` points the suite at another deployment (for example the Vite dev server on `:5173`).
 
 [GitHub Actions](.github/workflows/ci.yml) runs `go vet`, the Go tests with the race detector and a 90 % gate, oxlint, type-checking and the frontend coverage gate. It then builds the images, starts the stack with Docker Compose and runs the end-to-end suite, on every push.
 
@@ -236,7 +238,7 @@ backend/
   cmd/server/            entrypoint, graceful shutdown, healthcheck mode
   internal/calculator/   decimal128 domain: parsing, operations, formatting, errors
   internal/httpapi/      routes, strict JSON decoding, error mapping, middleware
-  Dockerfile             golang:1.27 → distroless, non-root
+  Dockerfile             golang:1.27-alpine → distroless, non-root
 frontend/
   src/calculator/        entry rules, keypad reducer (pure), keyboard map, useCalculator hook
   src/api/               typed fetch client, cURL builder
