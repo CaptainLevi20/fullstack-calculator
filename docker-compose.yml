@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      PORT: "8081"
+    # Not published: only nginx (web) talks to it.
+    healthcheck:
+      test: ["CMD", "/server", "healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
