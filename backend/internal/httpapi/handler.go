@@ -24,7 +24,8 @@ type calculateResponse struct {
 	Rounded bool   `json:"rounded"`
 }
 
-// NewHandler returns the API's root handler.
+// NewHandler returns the API's root handler, wrapped with panic recovery and
+// request logging.
 func NewHandler(logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/calculate", handleCalculate)
@@ -36,7 +37,7 @@ func NewHandler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		writeError(w, http.StatusNotFound, codeNotFound, "Not found.")
 	})
-	return mux
+	return withRecovery(logger, withRequestLog(logger, mux))
 }
 
 func handleCalculate(w http.ResponseWriter, r *http.Request) {
