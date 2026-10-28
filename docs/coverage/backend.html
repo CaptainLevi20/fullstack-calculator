@@ -1,0 +1,676 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>server: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">fullstack-calculator/backend/cmd/server/main.go (87.0%)</option>
+				
+				<option value="file1">fullstack-calculator/backend/internal/calculator/calculator.go (92.3%)</option>
+				
+				<option value="file2">fullstack-calculator/backend/internal/calculator/errors.go (0.0%)</option>
+				
+				<option value="file3">fullstack-calculator/backend/internal/calculator/number.go (95.5%)</option>
+				
+				<option value="file4">fullstack-calculator/backend/internal/httpapi/handler.go (91.1%)</option>
+				
+				<option value="file5">fullstack-calculator/backend/internal/httpapi/middleware.go (100.0%)</option>
+				
+				<option value="file6">fullstack-calculator/backend/internal/httpapi/respond.go (87.5%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Command server runs the calculator API.
+//
+// Usage:
+//
+//        server              serve on $PORT (default 8081)
+//        server healthcheck  exit 0 if the local server answers /healthz with 200
+package main
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "io"
+        "log/slog"
+        "net/http"
+        "os"
+        "os/signal"
+        "syscall"
+        "time"
+
+        "fullstack-calculator/backend/internal/httpapi"
+)
+
+const defaultPort = "8081"
+
+func main() {
+        <span class="cov0" title="0">ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+        code := run(ctx, os.Args[1:], os.Getenv, os.Stdout, os.Stderr)
+        stop()
+        os.Exit(code)
+</span>}
+
+// run is main without the process globals, so it can be tested. It returns
+// the exit code.
+func run(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer) int {
+        <span class="cov8" title="1">port := portFromEnv(getenv)
+</span>
+        <span class="cov8" title="1">if len(args) &gt; 0 &amp;&amp; args[0] == "healthcheck" </span>{
+                <span class="cov8" title="1">if err := checkHealth(ctx, "http://127.0.0.1:"+port+"/healthz"); err != nil </span>{
+                        <span class="cov8" title="1">fmt.Fprintln(stderr, err)
+                        return 1
+</span>                }
+                <span class="cov8" title="1">return 0</span>
+        }
+
+        <span class="cov8" title="1">logger := slog.New(slog.NewJSONHandler(stdout, nil))
+        srv := newServer(":"+port, httpapi.NewHandler(logger))
+        logger.Info("listening", "addr", srv.Addr)
+        if err := serve(ctx, srv, logger); err != nil </span>{
+                <span class="cov8" title="1">logger.Error("server stopped", "error", err)
+                return 1
+</span>        }
+        <span class="cov8" title="1">return 0</span>
+}
+
+func portFromEnv(getenv func(string) string) string {
+        <span class="cov8" title="1">if p := getenv("PORT"); p != "" </span>{
+                <span class="cov8" title="1">return p
+</span>        }
+        <span class="cov8" title="1">return defaultPort</span>
+}
+
+func newServer(addr string, h http.Handler) *http.Server {
+        <span class="cov8" title="1">return &amp;http.Server{
+                Addr:              addr,
+                Handler:           h,
+                ReadHeaderTimeout: 5 * time.Second,
+                ReadTimeout:       10 * time.Second,
+                WriteTimeout:      10 * time.Second,
+                IdleTimeout:       60 * time.Second,
+</span>        }
+}
+
+// checkHealth reports whether url answers with HTTP 200.
+func checkHealth(ctx context.Context, url string) error {
+        <span class="cov8" title="1">ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+        defer cancel()
+        req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+        if err != nil </span>{
+                <span class="cov0" title="0">return err
+</span>        }
+        <span class="cov8" title="1">resp, err := http.DefaultClient.Do(req)
+        if err != nil </span>{
+                <span class="cov8" title="1">return err
+</span>        }
+        <span class="cov8" title="1">defer resp.Body.Close()
+        if resp.StatusCode != http.StatusOK </span>{
+                <span class="cov8" title="1">return fmt.Errorf("healthcheck: status %d", resp.StatusCode)
+</span>        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+// serve runs srv until ctx is done, then shuts it down gracefully.
+func serve(ctx context.Context, srv *http.Server, logger *slog.Logger) error {
+        <span class="cov8" title="1">errCh := make(chan error, 1)
+        go func() </span>{ <span class="cov8" title="1">errCh &lt;- srv.ListenAndServe() }</span>()
+
+        <span class="cov8" title="1">select </span>{
+        case err := &lt;-errCh:
+                <span class="cov8" title="1">if errors.Is(err, http.ErrServerClosed) </span>{
+                        <span class="cov0" title="0">return nil
+</span>                }
+                <span class="cov8" title="1">return err</span>
+        case &lt;-ctx.Done():<span class="cov8" title="1"></span>
+        }
+
+        <span class="cov8" title="1">logger.Info("shutting down")
+        shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+        defer cancel()
+        return srv.Shutdown(shutdownCtx)</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Package calculator implements decimal128 arithmetic over wire-format
+// strings. It knows nothing about HTTP or JSON.
+package calculator
+
+import (
+        "fmt"
+
+        "github.com/cockroachdb/apd/v3"
+)
+
+// Operation identifies a supported calculator operation.
+type Operation string
+
+const (
+        OpAdd      Operation = "add"
+        OpSubtract Operation = "subtract"
+        OpMultiply Operation = "multiply"
+        OpDivide   Operation = "divide"
+        OpPower    Operation = "power"
+        OpSqrt     Operation = "sqrt"
+        OpPercent  Operation = "percent"
+)
+
+// Result is a formatted result and whether it had to be rounded.
+type Result struct {
+        Value   string
+        Rounded bool
+}
+
+// arity is the number of operands each operation takes.
+var arity = map[Operation]int{
+        OpAdd: 2, OpSubtract: 2, OpMultiply: 2, OpDivide: 2, OpPower: 2, OpSqrt: 1, OpPercent: 2,
+}
+
+// maxExponentMagnitude bounds power exponents before any work is done, so a
+// request like 10^999999999 is rejected without touching the decimal engine.
+const maxExponentMagnitude = 6000
+
+var (
+        errUnknownOperation = &amp;Error{Code: CodeUnknownOperation,
+                Message: "Operation must be one of: add, subtract, multiply, divide, power, sqrt, percent."}
+        errDivisionByZero     = &amp;Error{Code: CodeDivisionByZero, Message: "Cannot divide by zero."}
+        errNegativeSquareRoot = &amp;Error{Code: CodeNegativeSquareRoot, Message: "Cannot take the square root of a negative number."}
+        errNonIntegerExponent = &amp;Error{Code: CodeNonIntegerExponent, Message: "The exponent must be a whole number."}
+        errExponentOutOfRange = &amp;Error{Code: CodeResultOutOfRange,
+                Message: fmt.Sprintf("The exponent must be between -%d and %d.", maxExponentMagnitude, maxExponentMagnitude)}
+        errResultOutOfRange = &amp;Error{Code: CodeResultOutOfRange, Message: "The result is too large or too small to represent."}
+
+        maxExponent = apd.New(maxExponentMagnitude, 0)
+        minExponent = apd.New(-maxExponentMagnitude, 0)
+        hundred     = apd.New(100, 0)
+)
+
+// Calculate validates the operation and its operands, then computes the
+// result in decimal128. Domain failures are returned as *Error.
+func Calculate(op Operation, operands []string) (Result, error) {
+        <span class="cov8" title="1">want, ok := arity[op]
+        if !ok </span>{
+                <span class="cov8" title="1">return Result{}, errUnknownOperation
+</span>        }
+        <span class="cov8" title="1">if len(operands) != want </span>{
+                <span class="cov8" title="1">return Result{}, operandCountError(op, want)
+</span>        }
+        <span class="cov8" title="1">args := make([]*apd.Decimal, len(operands))
+        for i, s := range operands </span>{
+                <span class="cov8" title="1">d, err := parseOperand(s, i+1)
+                if err != nil </span>{
+                        <span class="cov8" title="1">return Result{}, err
+</span>                }
+                <span class="cov8" title="1">args[i] = d</span>
+        }
+
+        <span class="cov8" title="1">var d apd.Decimal
+        cond, err := compute(op, &amp;d, args)
+        switch </span>{
+        case err != nil:
+                <span class="cov8" title="1">return Result{}, err</span>
+        case cond.Overflow() || cond.Underflow():
+                <span class="cov8" title="1">return Result{}, errResultOutOfRange</span>
+        case cond.DivisionByZero() || cond.DivisionUndefined():
+                <span class="cov0" title="0">return Result{}, errDivisionByZero</span>
+        case cond.InvalidOperation():
+                <span class="cov0" title="0">return Result{}, fmt.Errorf("calculator: invalid operation %s%v", op, operands)</span>
+        }
+        <span class="cov8" title="1">return Result{Value: formatDecimal(&amp;d), Rounded: cond.Inexact()}, nil</span>
+}
+
+func compute(op Operation, d *apd.Decimal, args []*apd.Decimal) (apd.Condition, error) {
+        <span class="cov8" title="1">switch op </span>{
+        case OpAdd:
+                <span class="cov8" title="1">return decimal128.Add(d, args[0], args[1])</span>
+        case OpSubtract:
+                <span class="cov8" title="1">return decimal128.Sub(d, args[0], args[1])</span>
+        case OpMultiply:
+                <span class="cov8" title="1">return decimal128.Mul(d, args[0], args[1])</span>
+        case OpDivide:
+                <span class="cov8" title="1">if args[1].IsZero() </span>{
+                        <span class="cov8" title="1">return 0, errDivisionByZero
+</span>                }
+                <span class="cov8" title="1">return decimal128.Quo(d, args[0], args[1])</span>
+        case OpPower:
+                <span class="cov8" title="1">return power(d, args[0], args[1])</span>
+        case OpSqrt:
+                <span class="cov8" title="1">if args[0].Negative &amp;&amp; !args[0].IsZero() </span>{
+                        <span class="cov8" title="1">return 0, errNegativeSquareRoot
+</span>                }
+                <span class="cov8" title="1">return decimal128.Sqrt(d, args[0])</span>
+        case OpPercent:
+                <span class="cov8" title="1">product, err := decimal128.Mul(d, args[0], args[1])
+                if err != nil </span>{
+                        <span class="cov0" title="0">return product, err
+</span>                }
+                <span class="cov8" title="1">quotient, err := decimal128.Quo(d, d, hundred)
+                return product | quotient, err</span>
+        }
+        <span class="cov0" title="0">return 0, fmt.Errorf("calculator: unhandled operation %q", op)</span>
+}
+
+func power(d, base, exponent *apd.Decimal) (apd.Condition, error) {
+        <span class="cov8" title="1">var frac apd.Decimal
+        exponent.Modf(nil, &amp;frac)
+        if !frac.IsZero() </span>{
+                <span class="cov8" title="1">return 0, errNonIntegerExponent
+</span>        }
+        <span class="cov8" title="1">if exponent.Cmp(maxExponent) &gt; 0 || exponent.Cmp(minExponent) &lt; 0 </span>{
+                <span class="cov8" title="1">return 0, errExponentOutOfRange
+</span>        }
+        <span class="cov8" title="1">if exponent.IsZero() </span>{
+                <span class="cov8" title="1">d.SetInt64(1)
+                return 0, nil
+</span>        }
+        <span class="cov8" title="1">if base.IsZero() &amp;&amp; exponent.Negative </span>{
+                <span class="cov8" title="1">return 0, errDivisionByZero
+</span>        }
+        <span class="cov8" title="1">return decimal128.Pow(d, base, exponent)</span>
+}
+
+func operandCountError(op Operation, want int) *Error {
+        <span class="cov8" title="1">noun := "operands"
+        if want == 1 </span>{
+                <span class="cov8" title="1">noun = "operand"
+</span>        }
+        <span class="cov8" title="1">return &amp;Error{Code: CodeInvalidOperandCount, Message: fmt.Sprintf("%s needs exactly %d %s.", op, want, noun)}</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package calculator
+
+// Code is a stable, machine-readable identifier for a domain error.
+type Code string
+
+const (
+        CodeUnknownOperation    Code = "UNKNOWN_OPERATION"
+        CodeInvalidOperandCount Code = "INVALID_OPERAND_COUNT"
+        CodeInvalidNumber       Code = "INVALID_NUMBER"
+        CodeDivisionByZero      Code = "DIVISION_BY_ZERO"
+        CodeNegativeSquareRoot  Code = "NEGATIVE_SQUARE_ROOT"
+        CodeNonIntegerExponent  Code = "NON_INTEGER_EXPONENT"
+        CodeResultOutOfRange    Code = "RESULT_OUT_OF_RANGE"
+)
+
+// Error is a domain error whose Message is safe to show to end users.
+type Error struct {
+        Code    Code
+        Message string
+}
+
+func (e *Error) Error() string { <span class="cov0" title="0">return e.Message }</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package calculator
+
+import (
+        "fmt"
+        "regexp"
+        "strings"
+
+        "github.com/cockroachdb/apd/v3"
+)
+
+// decimal128 is the IEEE 754 decimal128 arithmetic context used for every
+// operation. Traps are disabled: callers inspect the returned conditions.
+// It is only ever read, so it is safe to share across goroutines.
+var decimal128 = apd.Context{
+        Precision:   34,
+        MaxExponent: 6144,
+        MinExponent: -6143,
+        Rounding:    apd.RoundHalfEven,
+        Traps:       0,
+}
+
+const maxOperandDigits = 34
+
+// operandPattern is the strict wire grammar for operands: plain or scientific
+// notation, no leading '+', no leading zeros, no bare decimal points.
+var operandPattern = regexp.MustCompile(`^-?(0|[1-9][0-9]*)(?:\.([0-9]+))?(?:[eE][+-]?[0-9]+)?$`)
+
+// parseOperand validates s against the wire grammar and the decimal128 limits.
+// position is 1-based and appears in error messages.
+func parseOperand(s string, position int) (*apd.Decimal, error) {
+        <span class="cov8" title="1">m := operandPattern.FindStringSubmatch(s)
+        if m == nil </span>{
+                <span class="cov8" title="1">return nil, invalidNumber(position, "is not a valid number")
+</span>        }
+        <span class="cov8" title="1">if coefficient := strings.TrimLeft(m[1]+m[2], "0"); len(coefficient) &gt; maxOperandDigits </span>{
+                <span class="cov8" title="1">return nil, invalidNumber(position, fmt.Sprintf("has more than %d digits", maxOperandDigits))
+</span>        }
+        <span class="cov8" title="1">d, _, err := apd.NewFromString(s)
+        if err != nil </span>{
+                <span class="cov8" title="1">return nil, invalidNumber(position, "is not a valid number")
+</span>        }
+        <span class="cov8" title="1">cond, err := decimal128.Round(d, d)
+        if err != nil || cond.Overflow() || cond.Underflow() || cond.Inexact() </span>{
+                <span class="cov8" title="1">return nil, invalidNumber(position, "is out of range")
+</span>        }
+        <span class="cov8" title="1">return d, nil</span>
+}
+
+// formatDecimal renders d for the wire. Plain notation is used while the
+// adjusted exponent stays within [-6, 33]; scientific notation otherwise.
+// Trailing fractional zeros are dropped and negative zero renders as "0".
+func formatDecimal(d *apd.Decimal) string {
+        <span class="cov8" title="1">var r apd.Decimal
+        if _, _, err := decimal128.Reduce(&amp;r, d); err != nil </span>{
+                <span class="cov0" title="0">r.Set(d)
+</span>        }
+        <span class="cov8" title="1">if r.IsZero() </span>{
+                <span class="cov8" title="1">return "0"
+</span>        }
+        <span class="cov8" title="1">adjusted := r.NumDigits() + int64(r.Exponent) - 1
+        if adjusted &gt;= -6 &amp;&amp; adjusted &lt;= 33 </span>{
+                <span class="cov8" title="1">return r.Text('f')
+</span>        }
+        <span class="cov8" title="1">return r.Text('E')</span>
+}
+
+func invalidNumber(position int, problem string) *Error {
+        <span class="cov8" title="1">return &amp;Error{Code: CodeInvalidNumber, Message: fmt.Sprintf("Operand %d %s.", position, problem)}
+</span>}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Package httpapi exposes the calculator over HTTP with JSON bodies.
+package httpapi
+
+import (
+        "bytes"
+        "encoding/json"
+        "errors"
+        "io"
+        "log/slog"
+        "net/http"
+
+        "fullstack-calculator/backend/internal/calculator"
+)
+
+const maxBodyBytes = 1024
+
+type calculateRequest struct {
+        Operation string    `json:"operation"`
+        Operands  []*string `json:"operands"`
+}
+
+type calculateResponse struct {
+        Result  string `json:"result"`
+        Rounded bool   `json:"rounded"`
+}
+
+// NewHandler returns the API's root handler, wrapped with panic recovery and
+// request logging.
+func NewHandler(logger *slog.Logger) http.Handler {
+        <span class="cov8" title="1">mux := http.NewServeMux()
+        mux.HandleFunc("POST /api/v1/calculate", handleCalculate)
+        mux.HandleFunc("/api/v1/calculate", methodNotAllowed("POST"))
+        mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) </span>{
+                <span class="cov8" title="1">writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+</span>        })
+        <span class="cov8" title="1">mux.HandleFunc("/healthz", methodNotAllowed("GET"))
+        mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) </span>{
+                <span class="cov8" title="1">writeError(w, http.StatusNotFound, codeNotFound, "Not found.")
+</span>        })
+        <span class="cov8" title="1">return withRecovery(logger, withRequestLog(logger, mux))</span>
+}
+
+func handleCalculate(w http.ResponseWriter, r *http.Request) {
+        <span class="cov8" title="1">body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
+        if err != nil </span>{
+                <span class="cov8" title="1">var tooLarge *http.MaxBytesError
+                if errors.As(err, &amp;tooLarge) </span>{
+                        <span class="cov8" title="1">writeError(w, http.StatusRequestEntityTooLarge, codePayloadTooLarge, "Request body must not exceed 1 KB.")
+                        return
+</span>                }
+                <span class="cov0" title="0">writeError(w, http.StatusBadRequest, codeInvalidJSON, invalidJSONMessage)
+                return</span>
+        }
+
+        <span class="cov8" title="1">req, ok := decodeCalculateRequest(body)
+        if !ok </span>{
+                <span class="cov8" title="1">writeError(w, http.StatusBadRequest, codeInvalidJSON, invalidJSONMessage)
+                return
+</span>        }
+
+        // A null operand becomes "", which the domain reports as INVALID_NUMBER
+        // with the operand's position.
+        <span class="cov8" title="1">operands := make([]string, len(req.Operands))
+        for i, o := range req.Operands </span>{
+                <span class="cov8" title="1">if o != nil </span>{
+                        <span class="cov8" title="1">operands[i] = *o
+</span>                }
+        }
+
+        <span class="cov8" title="1">res, err := calculator.Calculate(calculator.Operation(req.Operation), operands)
+        if err != nil </span>{
+                <span class="cov8" title="1">var domain *calculator.Error
+                if errors.As(err, &amp;domain) </span>{
+                        <span class="cov8" title="1">writeError(w, statusFor(domain.Code), string(domain.Code), domain.Message)
+                        return
+</span>                }
+                <span class="cov0" title="0">writeError(w, http.StatusInternalServerError, codeInternalError, internalErrorMessage)
+                return</span>
+        }
+        <span class="cov8" title="1">writeJSON(w, http.StatusOK, calculateResponse{Result: res.Value, Rounded: res.Rounded})</span>
+}
+
+const (
+        invalidJSONMessage   = `Request body must be a JSON object with "operation" and "operands".`
+        internalErrorMessage = "Internal server error."
+)
+
+// decodeCalculateRequest accepts exactly one JSON object with known fields.
+func decodeCalculateRequest(body []byte) (calculateRequest, bool) {
+        <span class="cov8" title="1">var req calculateRequest
+        dec := json.NewDecoder(bytes.NewReader(body))
+        dec.DisallowUnknownFields()
+        if err := dec.Decode(&amp;req); err != nil </span>{
+                <span class="cov8" title="1">return req, false
+</span>        }
+        <span class="cov8" title="1">if err := dec.Decode(&amp;struct{}{}); err != io.EOF </span>{
+                <span class="cov8" title="1">return req, false
+</span>        }
+        <span class="cov8" title="1">return req, true</span>
+}
+
+func methodNotAllowed(allow string) http.HandlerFunc {
+        <span class="cov8" title="1">return func(w http.ResponseWriter, _ *http.Request) </span>{
+                <span class="cov8" title="1">w.Header().Set("Allow", allow)
+                writeError(w, http.StatusMethodNotAllowed, codeMethodNotAllowed, "Method not allowed.")
+</span>        }
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package httpapi
+
+import (
+        "log/slog"
+        "net/http"
+        "time"
+)
+
+// statusRecorder remembers the status code written through it.
+type statusRecorder struct {
+        http.ResponseWriter
+        status int
+}
+
+func (r *statusRecorder) WriteHeader(status int) {
+        <span class="cov8" title="1">r.status = status
+        r.ResponseWriter.WriteHeader(status)
+</span>}
+
+// withRequestLog logs one structured line per request.
+func withRequestLog(logger *slog.Logger, next http.Handler) http.Handler {
+        <span class="cov8" title="1">return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span>{
+                <span class="cov8" title="1">start := time.Now()
+                rec := &amp;statusRecorder{ResponseWriter: w, status: http.StatusOK}
+                next.ServeHTTP(rec, r)
+                logger.Info("request",
+                        "method", r.Method,
+                        "path", r.URL.Path,
+                        "status", rec.status,
+                        "duration", time.Since(start),
+                )
+</span>        })
+}
+
+// withRecovery turns a panic into a JSON 500 so a bug never leaks a stack
+// trace or an empty response to the client.
+func withRecovery(logger *slog.Logger, next http.Handler) http.Handler {
+        <span class="cov8" title="1">return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span>{
+                <span class="cov8" title="1">defer func() </span>{
+                        <span class="cov8" title="1">if v := recover(); v != nil </span>{
+                                <span class="cov8" title="1">logger.Error("panic serving request", "panic", v, "path", r.URL.Path)
+                                writeError(w, http.StatusInternalServerError, codeInternalError, internalErrorMessage)
+</span>                        }
+                }()
+                <span class="cov8" title="1">next.ServeHTTP(w, r)</span>
+        })
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package httpapi
+
+import (
+        "encoding/json"
+        "net/http"
+
+        "fullstack-calculator/backend/internal/calculator"
+)
+
+// HTTP-level error codes. Domain codes come from the calculator package.
+const (
+        codeInvalidJSON      = "INVALID_JSON"
+        codePayloadTooLarge  = "PAYLOAD_TOO_LARGE"
+        codeNotFound         = "NOT_FOUND"
+        codeMethodNotAllowed = "METHOD_NOT_ALLOWED"
+        codeInternalError    = "INTERNAL_ERROR"
+)
+
+type errorBody struct {
+        Code    string `json:"code"`
+        Message string `json:"message"`
+}
+
+type errorResponse struct {
+        Error errorBody `json:"error"`
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        _ = json.NewEncoder(w).Encode(v)
+</span>}
+
+func writeError(w http.ResponseWriter, status int, code, message string) {
+        <span class="cov8" title="1">writeJSON(w, status, errorResponse{Error: errorBody{Code: code, Message: message}})
+</span>}
+
+// statusFor maps a domain error code to its HTTP status: 400 when the request
+// is malformed, 422 when it is well-formed but the maths has no answer.
+func statusFor(code calculator.Code) int {
+        <span class="cov8" title="1">switch code </span>{
+        case calculator.CodeUnknownOperation, calculator.CodeInvalidOperandCount, calculator.CodeInvalidNumber:
+                <span class="cov8" title="1">return http.StatusBadRequest</span>
+        case calculator.CodeDivisionByZero, calculator.CodeNegativeSquareRoot,
+                calculator.CodeNonIntegerExponent, calculator.CodeResultOutOfRange:
+                <span class="cov8" title="1">return http.StatusUnprocessableEntity</span>
+        }
+        <span class="cov0" title="0">return http.StatusInternalServerError</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>calculator-layout — design exploration</title>
+<style>
+:root { --bg-primary:#f5f5f7; --bg-secondary:#fff; --bg-tertiary:#e5e5e7; --border:#d1d1d6;
+  --text-primary:#1d1d1f; --text-secondary:#86868b; --accent:#0071e3; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary);
+  line-height: 1.5; padding: 2rem; }
+.banner { margin-bottom: 1.5rem; padding: .6rem 1rem; border-radius: 8px; background: #fff3d6; color: #7c5300; font-size: .85rem; }
+h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: .5rem; }
+h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .25rem; }
+.subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+.label { font-size: .7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.card-body { padding: 1rem; }
+.card-body p { color: var(--text-secondary); font-size: .85rem; }
+</style>
+</head>
+<body>
+<p class="banner">Exploration mockup from the Superpowers brainstorming session (in Spanish, pre-final). The approved design is <code>docs/superpowers/specs/2026-10-28-fullstack-calculator-design.md</code>.</p>
+<style>
+  .phone { width: 250px; margin: 0 auto; background: #0f1115; border-radius: 26px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.25); font-family: system-ui, sans-serif; }
+  .disp { background: #171a21; border-radius: 14px; padding: 12px 12px 10px; margin-bottom: 10px; min-height: 92px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .expr { color: #8b93a7; font-size: 12px; text-align: right; }
+  .res { color: #f5f7fb; font-size: 17px; font-weight: 600; text-align: right; word-break: break-all; line-height: 1.25; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: #3a2f12; color: #f4c35a; margin-top: 6px; align-self: flex-end; }
+  .badge.ok { background: #12301f; color: #5fd391; }
+  .err { color: #ff7b72; font-size: 12px; text-align: right; margin-top: 4px; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .k { background: #232733; color: #e7eaf2; border-radius: 12px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; }
+  .k.fn { background: #2e3442; color: #aeb6c8; font-size: 12px; }
+  .k.op { background: #3b4a6b; color: #dfe7ff; }
+  .k.eq { background: #4f7cff; color: #fff; grid-row: span 2; height: auto; }
+  .k.zero { grid-column: span 2; }
+
+  .formcard { width: 250px; margin: 0 auto; background: #ffffff; color: #1d1d1f; border-radius: 18px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.15); font-family: system-ui, sans-serif; border: 1px solid #e3e5ea; }
+  .flabel { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; margin-bottom: 4px; }
+  .finput { border: 1.5px solid #d1d5db; border-radius: 10px; padding: 8px 10px; font-size: 15px; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+  .finput.bad { border-color: #e5484d; background: #fff5f5; }
+  .fhelp { font-size: 10px; color: #e5484d; margin-bottom: 10px; min-height: 12px; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: #f1f3f6; padding: 4px; border-radius: 10px; margin-bottom: 4px; }
+  .seg div { text-align: center; font-size: 13px; padding: 5px 0; border-radius: 7px; color: #4b5563; }
+  .seg div.on { background: #fff; color: #111; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .fbtn { background: #4f7cff; color: #fff; text-align: center; border-radius: 10px; padding: 9px; font-weight: 600; font-size: 14px; margin: 10px 0 12px; }
+  .fres { background: #f7f8fa; border-radius: 12px; padding: 10px; }
+  .fres .v { font-size: 15px; font-weight: 600; word-break: break-all; font-variant-numeric: tabular-nums; }
+  .fres .b { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: #fff3d6; color: #9a6700; margin-top: 6px; }
+
+  .desk { display: grid; grid-template-columns: 170px 1fr; gap: 10px; background: #0f1115; border-radius: 16px; padding: 12px; font-family: system-ui, sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .desk .keys { gap: 5px; }
+  .desk .k { height: 26px; font-size: 12px; border-radius: 8px; }
+  .desk .disp { min-height: 64px; padding: 8px; }
+  .desk .res { font-size: 13px; }
+  .side { background: #171a21; border-radius: 12px; padding: 10px; color: #cfd5e3; font-size: 11px; display: flex; flex-direction: column; gap: 8px; }
+  .side h4 { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #8b93a7; font-weight: 600; }
+  .hist { display: flex; justify-content: space-between; gap: 6px; border-bottom: 1px solid #262b36; padding-bottom: 5px; }
+  .hist span:last-child { color: #f5f7fb; font-variant-numeric: tabular-nums; }
+  .json { background: #0b0d11; border-radius: 8px; padding: 7px; font-family: ui-monospace, Consolas, monospace; font-size: 9.5px; line-height: 1.45; color: #9fb4ff; white-space: pre-wrap; word-break: break-all; }
+  .json .s { color: #8fe3b0; }
+  .stage { padding: 18px 10px; background: var(--bg-tertiary); }
+</style>
+
+<h2>¿Qué forma de pantalla te parece la más indicada para la calculadora?</h2>
+<p class="subtitle">Las tres consumen el mismo endpoint y respetan las mismas reglas: números como texto, 34 dígitos y aviso cuando hay redondeo. Lo que cambia es cómo el usuario mete los datos. Por ahora ignora colores y tipografía; eso lo vemos en la siguiente pantalla.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="keypad">
+    <div class="stage">
+      <div class="phone">
+        <div class="disp">
+          <div class="expr">10 ÷ 3 =</div>
+          <div class="res">3.333333333333333333333333333333333</div>
+          <span class="badge">≈ redondeado a 34 dígitos</span>
+        </div>
+        <div class="keys">
+          <div class="k fn">AC</div><div class="k fn">⌫</div><div class="k fn">%</div><div class="k op">÷</div>
+          <div class="k fn">√</div><div class="k fn">xʸ</div><div class="k fn">±</div><div class="k op">×</div>
+          <div class="k">7</div><div class="k">8</div><div class="k">9</div><div class="k op">−</div>
+          <div class="k">4</div><div class="k">5</div><div class="k">6</div><div class="k op">+</div>
+          <div class="k">1</div><div class="k">2</div><div class="k">3</div><div class="k eq">=</div>
+          <div class="k zero">0</div><div class="k">.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Teclado clásico</h3>
+      <p>Como la calculadora del teléfono. Solo se puede escribir lo que hay en las teclas (y el teclado físico pasa por el mismo filtro), así que es difícil meter algo inválido. Los errores, como dividir por cero, aparecen en rojo dentro de la pantalla. Lo más intuitivo en móvil, pero el porcentaje y la potencia son menos obvios de leer.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="form">
+    <div class="stage">
+      <div class="formcard">
+        <div class="flabel">Primer número</div>
+        <div class="finput">1250.75</div>
+        <div class="fhelp"></div>
+        <div class="flabel">Operación</div>
+        <div class="seg"><div>+</div><div>−</div><div>×</div><div class="on">÷</div></div>
+        <div class="seg"><div>xʸ</div><div>√</div><div>%</div><div></div></div>
+        <div class="fhelp"></div>
+        <div class="flabel">Segundo número</div>
+        <div class="finput bad">0</div>
+        <div class="fhelp">No se puede dividir por cero.</div>
+        <div class="fbtn">Calcular</div>
+        <div class="fres">
+          <div class="flabel">Último resultado · 1250.75 ÷ 3</div>
+          <div class="v">416.9166666666666666666666666666667</div>
+          <span class="b">≈ redondeado</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Formulario explícito</h3>
+      <p>Dos campos y un selector de operación, igual a lo que recibe la API. Cada error aparece bajo el campo que lo causó, y el porcentaje se puede rotular sin ambigüedad ("A % de B"). Se siente como un formulario de pagos; es muy claro y fácil de probar, pero se parece menos a una calculadora.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="keypad-inspector">
+    <div class="stage">
+      <div class="desk">
+        <div>
+          <div class="disp">
+            <div class="expr">0.1 + 0.2 =</div>
+            <div class="res">0.3</div>
+            <span class="badge ok">exacto</span>
+          </div>
+          <div class="keys">
+            <div class="k fn">AC</div><div class="k fn">⌫</div><div class="k fn">%</div><div class="k op">÷</div>
+            <div class="k fn">√</div><div class="k fn">xʸ</div><div class="k fn">±</div><div class="k op">×</div>
+            <div class="k">7</div><div class="k">8</div><div class="k">9</div><div class="k op">−</div>
+            <div class="k">4</div><div class="k">5</div><div class="k">6</div><div class="k op">+</div>
+            <div class="k">1</div><div class="k">2</div><div class="k">3</div><div class="k eq">=</div>
+            <div class="k zero">0</div><div class="k">.</div>
+          </div>
+        </div>
+        <div class="side">
+          <h4>Historial</h4>
+          <div class="hist"><span>0.1 + 0.2</span><span>0.3</span></div>
+          <div class="hist"><span>10 ÷ 3</span><span>≈ 3.3333…</span></div>
+          <div class="hist"><span>√2</span><span>≈ 1.4142…</span></div>
+          <h4>Última petición a la API</h4>
+<div class="json">POST /api/v1/calculate
+{"operation":"add",
+ "operands":[<span class="s">"0.1"</span>,<span class="s">"0.2"</span>]}
+← 200
+{"result":<span class="s">"0.3"</span>,"rounded":false}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C · Teclado + historial e inspector</h3>
+      <p>El teclado de la opción A, más un panel lateral en escritorio con el historial y la última petición y respuesta JSON. Así el evaluador ve los números viajando como texto sin abrir las herramientas del navegador. En móvil el panel se pliega bajo el teclado. Es la opción más vistosa, pero suma un componente más que construir y probar.</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
