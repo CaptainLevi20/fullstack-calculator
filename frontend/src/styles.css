@@ -4,7 +4,7 @@
   --surface: #fffdf8;
   --edge: #e2dccf;
   --ink: #18201c;
-  --muted: #7a756a;
+  --muted: #6b665b; /* 5.06:1 on paper, WCAG AA */
   --fn: #ebe5d8;
   --fn-ink: #4d4a42;
   --op: #1f2a24;
@@ -58,6 +58,7 @@ button {
 /* Layout: one column on phones, calculator + side panel from tablet up. */
 .app {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   max-width: 420px;
   margin: 0 auto;
@@ -193,11 +194,14 @@ button {
 /* Side panel */
 .side {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 12px;
+  min-width: 0;
 }
 
 .section {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--edge);
   border-radius: 14px;
@@ -247,15 +251,18 @@ button {
 /* History */
 .history {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Expression and result share the row. A short expression keeps its full
+   width; a long one is capped at 55% and truncated, so the result always
+   keeps at least 45% and truncates in what remains. */
 .history-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  display: flex;
   gap: 12px;
   width: 100%;
   padding: 6px 8px;
@@ -273,11 +280,17 @@ button {
 }
 
 .history-expression {
+  flex: 0 0 auto;
+  max-width: 55%;
+  overflow: hidden;
   color: var(--muted);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .history-value {
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -286,11 +299,15 @@ button {
 }
 
 .history-row--open {
-  grid-template-columns: 1fr;
+  flex-direction: column;
+  gap: 2px;
   background: var(--paper);
 }
 
+.history-row--open .history-expression,
 .history-row--open .history-value {
+  flex: none;
+  max-width: none;
   overflow-wrap: anywhere;
   text-align: left;
   white-space: normal;

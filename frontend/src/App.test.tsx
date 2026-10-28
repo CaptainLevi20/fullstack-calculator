@@ -44,6 +44,15 @@ describe('App', () => {
     expect(api).toHaveBeenCalledWith({ operation: 'add', operands: ['2', '3'] });
   });
 
+  it('Enter on a focused digit key does not press that key again', async () => {
+    const api = fakeApi({});
+    render(<App api={api} />);
+    await userEvent.click(key('7')); // focus stays on "7"; nothing to evaluate yet
+    await userEvent.keyboard('{Enter}');
+    expect(document.querySelector('.display-entry')).toHaveTextContent(/^7$/);
+    expect(api).not.toHaveBeenCalled();
+  });
+
   it('Enter on a non-keypad button activates that button instead of evaluating', async () => {
     const api = fakeApi({});
     render(<App api={api} />);

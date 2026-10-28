@@ -22,7 +22,7 @@ Open **http://localhost:8080**. nginx serves the UI and proxies `/api` to the Go
 
 ## Running locally without Docker
 
-Prerequisites: **Go 1.22+** (developed on 1.27) and **Node 20+** (developed on 24).
+Prerequisites: **Go 1.27+** and **Node 22.22+ or 24.15+** (developed on Go 1.27 and Node 24; the test tooling — Vitest 5, jsdom 30 — needs those Node versions).
 
 ```bash
 # terminal 1 — API on http://localhost:8081
@@ -195,7 +195,7 @@ cd frontend && npm run coverage         # fails below the 85% thresholds
 | Layer | Statements | Notes |
 |---|---|---|
 | Backend total | **90.9 %** | calculator 92.0 %, httpapi 92.4 %, cmd/server 87.0 % |
-| Frontend total | **97.6 %** | branches 96.4 %, functions 97.8 %, lines 99.3 %; 100 tests |
+| Frontend total | **97.6 %** | branches 96.4 %, functions 97.8 %, lines 99.3 %; 101 tests |
 
 HTML reports are committed so they can be opened without running anything: [`docs/coverage/backend.html`](docs/coverage/backend.html) and [`docs/coverage/frontend/index.html`](docs/coverage/frontend/index.html).
 
