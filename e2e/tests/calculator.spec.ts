@@ -39,6 +39,30 @@ test('shows the API error when dividing by zero', async ({ page }) => {
   await expect(page.locator('.inspector-meta--error')).toHaveText('← 422');
 });
 
+test('animates the busy = key only when the user allows motion', async ({ page }) => {
+  // Hold the API response so the request stays in flight.
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/api/v1/calculate', async (route) => {
+    await held;
+    await route.continue();
+  });
+  const equals = key(page, 'equals');
+  const animation = () => equals.evaluate((el) => getComputedStyle(el).animationName);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.keyboard.type('1+1');
+  await page.keyboard.press('Enter');
+  await expect(equals).toHaveAttribute('aria-busy', 'true');
+  expect(await animation()).toBe('none');
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  expect(await animation()).toBe('busy');
+
+  release();
+  await expect(entry(page)).toHaveText('2');
+});
+
 test.describe('on a phone', () => {
   const width = 390;
   test.use({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true });

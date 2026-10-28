@@ -174,7 +174,13 @@ button {
 
 .key--equals[aria-busy='true'] {
   cursor: progress;
-  animation: busy 0.9s ease-in-out infinite alternate;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .key--equals[aria-busy='true'] {
+    animation: busy 0.9s ease-in-out infinite alternate;
+  }
 }
 
 @keyframes busy {
