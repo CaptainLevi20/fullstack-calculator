@@ -37,7 +37,7 @@ func NewHandler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		writeError(w, http.StatusNotFound, codeNotFound, "Not found.")
 	})
-	return withRecovery(logger, withRequestLog(logger, mux))
+	return withMiddleware(logger, mux)
 }
 
 func handleCalculate(w http.ResponseWriter, r *http.Request) {

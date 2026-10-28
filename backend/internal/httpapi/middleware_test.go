@@ -44,3 +44,25 @@ func TestRecoveryTurnsPanicIntoJSON500(t *testing.T) {
 		t.Errorf("panic value not logged: %q", buf.String())
 	}
 }
+
+func TestPanickingRequestIsStillLogged(t *testing.T) {
+	var buf bytes.Buffer
+	h := withMiddleware(slog.New(slog.NewJSONHandler(&buf, nil)), http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		panic("boom")
+	}))
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("POST", "/api/v1/calculate", nil))
+
+	for _, line := range bytes.Split(bytes.TrimSpace(buf.Bytes()), []byte("\n")) {
+		var entry map[string]any
+		if err := json.Unmarshal(line, &entry); err != nil {
+			t.Fatalf("log line is not JSON: %q", line)
+		}
+		if entry["msg"] == "request" {
+			if entry["status"] != float64(500) || entry["path"] != "/api/v1/calculate" {
+				t.Errorf("request log entry = %v, want status 500 for /api/v1/calculate", entry)
+			}
+			return
+		}
+	}
+	t.Errorf("no request log line for a panicking request; log = %q", buf.String())
+}

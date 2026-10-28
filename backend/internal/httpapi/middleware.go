@@ -17,6 +17,12 @@ func (r *statusRecorder) WriteHeader(status int) {
 	r.ResponseWriter.WriteHeader(status)
 }
 
+// withMiddleware applies the API's middleware stack to h. Recovery sits
+// inside the request log so a panicking request is still logged, as a 500.
+func withMiddleware(logger *slog.Logger, h http.Handler) http.Handler {
+	return withRequestLog(logger, withRecovery(logger, h))
+}
+
 // withRequestLog logs one structured line per request.
 func withRequestLog(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
