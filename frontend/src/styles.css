@@ -212,7 +212,9 @@ button {
   font-size: 0.72rem;
 }
 
-.section-toggle {
+/* The toggle (phones) and the static title (wider screens) look the same. */
+.section-toggle,
+.section-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -226,6 +228,9 @@ button {
   letter-spacing: 0.06em;
   text-align: left;
   text-transform: uppercase;
+}
+
+.section-toggle {
   cursor: pointer;
 }
 
@@ -362,25 +367,12 @@ button {
   white-space: pre-wrap;
 }
 
+/* Keep in sync with WIDE_SCREEN in components/Section.tsx. */
 @media (min-width: 768px) {
   .app {
     grid-template-columns: 320px minmax(0, 1fr);
     align-items: start;
     max-width: 880px;
     padding: 40px 24px;
-  }
-
-  /* Panels are always open on larger screens; the toggle becomes a heading. */
-  .section-body[hidden] {
-    display: block;
-  }
-
-  .section-toggle {
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .section-toggle::after {
-    content: none;
   }
 }
