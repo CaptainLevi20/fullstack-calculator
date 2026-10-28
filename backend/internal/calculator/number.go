@@ -46,6 +46,24 @@ func parseOperand(s string, position int) (*apd.Decimal, error) {
 	return d, nil
 }
 
+// formatDecimal renders d for the wire. Plain notation is used while the
+// adjusted exponent stays within [-6, 33]; scientific notation otherwise.
+// Trailing fractional zeros are dropped and negative zero renders as "0".
+func formatDecimal(d *apd.Decimal) string {
+	var r apd.Decimal
+	if _, _, err := decimal128.Reduce(&r, d); err != nil {
+		r.Set(d)
+	}
+	if r.IsZero() {
+		return "0"
+	}
+	adjusted := r.NumDigits() + int64(r.Exponent) - 1
+	if adjusted >= -6 && adjusted <= 33 {
+		return r.Text('f')
+	}
+	return r.Text('E')
+}
+
 func invalidNumber(position int, problem string) *Error {
 	return &Error{Code: CodeInvalidNumber, Message: fmt.Sprintf("Operand %d %s.", position, problem)}
 }

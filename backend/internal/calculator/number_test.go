@@ -3,6 +3,8 @@ package calculator
 import (
 	"errors"
 	"testing"
+
+	"github.com/cockroachdb/apd/v3"
 )
 
 func TestParseOperandAccepts(t *testing.T) {
@@ -11,7 +13,7 @@ func TestParseOperandAccepts(t *testing.T) {
 		"1234567890123456789012345678901234",        // exactly 34 digits
 		"0.0000000000000000000000000000000000001",   // leading zeros don't count
 		"9.999999999999999999999999999999999E+6144", // decimal128 maximum
-		"1E-6176",                                   // smallest subnormal
+		"1E-6176", // smallest subnormal
 	}
 	for _, s := range valid {
 		if _, err := parseOperand(s, 1); err != nil {
@@ -46,6 +48,36 @@ func TestParseOperandRejects(t *testing.T) {
 		}
 		if c.message != "" && e.Message != c.message {
 			t.Errorf("parseOperand(%q) message = %q, want %q", c.in, e.Message, c.message)
+		}
+	}
+}
+
+func TestFormatDecimal(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"1000", "1000"},
+		{"1E+3", "1000"},
+		{"2.50", "2.5"},
+		{"3.0", "3"},
+		{"-12.50", "-12.5"},
+		{"-0", "0"},
+		{"-0.000", "0"},
+		{"0.000001", "0.000001"},
+		{"0.0000001", "1E-7"},
+		{"0.03333333333333333333333333333333333", "0.03333333333333333333333333333333333"},
+		{"3.333333333333333333333333333333333E-8", "3.333333333333333333333333333333333E-8"},
+		{"1E+20", "100000000000000000000"},
+		{"1234567890123456789012345678901234", "1234567890123456789012345678901234"},           // adj 33: plain
+		{"1.234567890123456789012345678901234E+34", "1.234567890123456789012345678901234E+34"}, // adj 34: scientific
+		{"1E+40", "1E+40"},
+		{"1.50E+40", "1.5E+40"},
+	}
+	for _, c := range cases {
+		d, _, err := apd.NewFromString(c.in)
+		if err != nil {
+			t.Fatalf("bad fixture %q: %v", c.in, err)
+		}
+		if got := formatDecimal(d); got != c.want {
+			t.Errorf("formatDecimal(%s) = %q, want %q", c.in, got, c.want)
 		}
 	}
 }
